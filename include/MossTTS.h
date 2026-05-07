@@ -13,7 +13,7 @@
 #include <random>
 
 #include "nlohmann/json.hpp"
-//#include <sentencepiece_processor.h> #Not work on windows, need to build from source, currently skip tokenizer part
+#include <sentencepiece_processor.h>
 // #include <dml_provider_factory.h> #Sometimes it works, sometimes it doesn't, need further investigation, currently skip DML provider part
 
 using json = nlohmann::json;
@@ -98,9 +98,9 @@ public:
     MossTTS() = delete;
     MossTTS(const std::string modelDir, json manifest);
     virtual ~MossTTS();
-    void SynthesizeSpeech(const std::vector<std::vector<int>>& promptAudioCodes, const std::vector<int>& TextTokenIDs);
+    void SynthesizeSpeech(const std::vector<std::vector<int>>& promptAudioCodes, std::string textInput);
 
-    //sentencepiece::SentencePieceProcessor processor;
+    sentencepiece::SentencePieceProcessor processor;
 
 private:
     Ort::Env env_;

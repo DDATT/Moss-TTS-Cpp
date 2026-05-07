@@ -37,8 +37,7 @@ MossTTS::MossTTS(const std::string modelDir, json manifest)
     //sessionDMLOptions_.DisableMemPattern();
     //sessionDMLOptions_.DisableProfiling();
 
-
-    std::string tokenizerPathString = modelDir + "/MOSS-TTS-Nano/tokenizer.model";
+    std::string tokenizerPathString = modelDir + "\\MOSS-TTS-Nano-100M-ONNX\\tokenizer.model";
     std::string prefillPathString = modelDir + "\\MOSS-TTS-Nano-100M-ONNX\\moss_tts_prefill.onnx";
     std::string decodePathString = modelDir + "\\MOSS-TTS-Nano-100M-ONNX\\moss_tts_decode_step.onnx";
     std::string localDecoderFixedPathString = modelDir + "\\MOSS-TTS-Nano-100M-ONNX\\moss_tts_local_fixed_sampled_frame.onnx";
@@ -76,17 +75,19 @@ MossTTS::MossTTS(const std::string modelDir, json manifest)
     codecEncode = Ort::Session(env_, codecEncodePath, sessionOptions_);
     codecDecode = Ort::Session(env_, codecDecodePath, sessionOptions_);
     codecDecodeStep = Ort::Session(env_, codecDecodeStepPath, sessionOptions_);
-    //const auto status = processor.Load("D:\\project\\Moss-CPP-ONNX\\models\\MOSS-TTS-Nano-100M-ONNX\\tokenizer.model");
-    //if (!status.ok()) {
-    //    std::cerr << status.ToString() << std::endl;
-    //    // error
-    //}
+    const auto status = processor.Load(tokenizerPathString);
+    if (!status.ok()) {
+        std::cerr << status.ToString() << std::endl;
+        // error
+    }
 }
 
 MossTTS::~MossTTS() {}
 
-void MossTTS::SynthesizeSpeech(const std::vector<std::vector<int>>& promptAudioCodes, const std::vector<int>& TextTokenIDs) {
+void MossTTS::SynthesizeSpeech(const std::vector<std::vector<int>>& promptAudioCodes, std::string textInput) {
     //place holder for Text preprocessing
+    std::vector<int> TextTokenIDs;
+    processor.Encode(textInput, &TextTokenIDs);
 	VoiceCloneRequest request = build_voice_clone_request_rows(promptAudioCodes, TextTokenIDs);
 
     std::vector<Ort::Value> prefillInputTensors;
@@ -150,7 +151,7 @@ void MossTTS::SynthesizeSpeech(const std::vector<std::vector<int>>& promptAudioC
     generatedFramesFlat.reserve(375 * 16);
 
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-    std::mt19937 rng(1234);
+    std::mt19937_64 rng(1234);
 	int audio_code_lengths = 0;
 
     for (int i = 0; i < 375; i++) {
